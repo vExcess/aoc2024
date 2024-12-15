@@ -23,18 +23,58 @@ bool feq(double a, double b) {
     return abs(a - b) < 0.0000000001;
 }
 
+int calcAntennaCount(List<List<String>> map, Map<String, List<List<int>>> antennas, bool part2) {
+    for (final frequency in antennas.keys) {
+        var subAntennas = antennas[frequency] as List<List<int>>;
+        for (var i = 0; i < subAntennas.length; i++) {
+            final a1 = subAntennas[i];
+            for (var j = 0; j < subAntennas.length; j++) {
+                final a2 = subAntennas[j];
+                var slope;
+                if (a2[0] == a1[0]) {
+                    slope = double.infinity;
+                } else {
+                    slope = (a2[1] - a1[1]) / (a2[0] - a1[0]);
+                }
+                final b = -(slope * a1[0] - a1[1]);
+                for (var y = 0; y < map.length; y++) {
+                    for (var x = 0; x < map[y].length; x++) {
+                        if (feq(y.toDouble(), slope * x + b)) {
+                            final d1 = dist(x, y, a1[0], a1[1]);
+                            final d2 = dist(x, y, a2[0], a2[1]);
+                            if (part2 || feq(d1, d2 * 2) || feq(d1 * 2, d2)) {
+                                map[y][x] = '#';
+                            }
+                        }
+                    }
+                }
+            }   
+        }
+    }
+
+    var antennaCount = 0;
+    for (var y = 0; y < map.length; y++) {
+        for (var x = 0; x < map[y].length; x++) {
+            if (map[y][x] == '#') {
+                antennaCount++;
+            }
+        }
+    }
+
+    return antennaCount;
+}
+
 void main() {
     File("./input.txt").readAsString().then((String txt) {
         final startTime = DateTime.now().millisecondsSinceEpoch;
         
-        List<List<String>> map = txt.split('\n').map((l) => l.split('').toList()).toList();
-
-        Map<String, List<List<int>>> antennas = HashMap();
         final frequencies = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        List<List<String>> map = txt.split('\n').map((l) => l.split('').toList()).toList();
+        Map<String, List<List<int>>> antennas = HashMap();
         for (var i = 0; i < frequencies.length; i++) {
             antennas[frequencies[i]] = [];
         }
-
         for (var y = 0; y < map.length; y++) {
             for (var x = 0; x < map[y].length; x++) {
                 final value = map[y][x];
@@ -43,48 +83,22 @@ void main() {
                 }
             }
         }
+        print("part1: ${calcAntennaCount(map,  antennas, false)}");
 
-        final part2 = true;
-
-        for (final frequency in antennas.keys) {
-            var subAntennas = antennas[frequency] as List<List<int>>;
-            for (var i = 0; i < subAntennas.length; i++) {
-                final a1 = subAntennas[i];
-                for (var j = 0; j < subAntennas.length; j++) {
-                    final a2 = subAntennas[j];
-                    var slope;
-                    if (a2[0] == a1[0]) {
-                        slope = double.infinity;
-                    } else {
-                        slope = (a2[1] - a1[1]) / (a2[0] - a1[0]);
-                    }
-                    final b = -(slope * a1[0] - a1[1]);
-                    for (var y = 0; y < map.length; y++) {
-                        for (var x = 0; x < map[y].length; x++) {
-                            if (feq(y.toDouble(), slope * x + b)) {
-                                final d1 = dist(x, y, a1[0], a1[1]);
-                                final d2 = dist(x, y, a2[0], a2[1]);
-                                if (part2 || feq(d1, d2 * 2) || feq(d1 * 2, d2)) {
-                                    map[y][x] = '#';
-                                }
-                            }
-                        }
-                    }
-                }   
-            }
+        map = txt.split('\n').map((l) => l.split('').toList()).toList();
+        antennas = HashMap();
+        for (var i = 0; i < frequencies.length; i++) {
+            antennas[frequencies[i]] = [];
         }
-
-        var antennaCount = 0;
         for (var y = 0; y < map.length; y++) {
             for (var x = 0; x < map[y].length; x++) {
-                if (map[y][x] == '#') {
-                    antennaCount++;
+                final value = map[y][x];
+                if (value != '.' && value != '#') {
+                    (antennas[value] as List<List<int>>).add([x, y]);
                 }
             }
         }
-
-        print(map.map((r) => r.join("")).join("\n"));
-        print("antennaCount: $antennaCount");
+        print("part2: ${calcAntennaCount(map,  antennas, true)}");
 
         final endTime = DateTime.now().millisecondsSinceEpoch;
         print("millis: ${endTime - startTime}");
